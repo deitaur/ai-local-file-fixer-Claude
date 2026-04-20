@@ -1,24 +1,32 @@
-# FOR CLAIDE
-# AI Local File Fixer (NTFS to Linux Mount)
+# Claude Desktop File Access Fixer
 
-This tool solves the common **"Input/output error"** and visibility issues when accessing Windows NTFS folders/files from Linux environments, WSL, or AI tools like Claude AI and Cursor.
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+[![Platform: Windows](https://img.shields.io/badge/Platform-Windows-blue.svg)]()
 
-## ⚠️ The Problem
-When using AI tools or WSL to analyze local files, directories (especially those with deep nesting or datasets) often become inaccessible or appear empty. Even if they are visible in Windows Explorer, Linux mounts may report `Input/output error`. This happens because Windows retains specific NTFS metadata or ACL restrictions that prevent Linux/AI access.
+A targeted batch script to resolve the exact issue where the **Claude Desktop App for Windows** fails to read specific local folders or files (throwing `Input/output error`, showing folders as empty, or failing to index files for Projects).
 
-## 🚀 How This Script Fixes It
-The script performs a "Deep Refresh" of the NTFS Master File Table (MFT) and security descriptors up to 4+ levels deep:
-1. **Unlocks AI Access:** Strips restricted attributes from datasets, books, and archives, making them readable for local AI agents.
-2. **Takes Ownership:** Recursively grants ownership to the current user.
-3. **Resets ACLs:** Grants "Everyone" full access (maps to `777` in Linux mounts).
-4. **Forces MFT Re-indexing:** Safely "touches" file metadata without changing content to force Windows to rebuild the index.
+## 🛑 The Specific Problem
 
-## 🛠️ Usage
-1. Download `Deep_Index_Fix.cmd`.
+When trying to upload local directories or datasets into Claude Desktop, the app may silently fail or throw an I/O error. This happens because Claude's local file-reading mechanisms get blocked by desynchronized NTFS indexing, lingering read-only attributes, or strict Windows ACLs on deep folder structures. 
+
+This script is designed to solve **only this specific problem** by forcing Windows to flush the Master File Table (MFT) and normalize permissions for the target directory.
+
+## 🚀 Usage Instructions
+
+1. Download the `Deep_Index_Fix.cmd` script.
 2. Right-click the file and select **Run as Administrator**.
-3. Drag and drop the problematic folder (e.g., your dataset or books directory) into the console window and press Enter.
-4. Wait for the "SUCCESS" message.
-5. Refresh your Linux mount or AI project interface.
+3. Drag and drop the problematic folder into the console window and press Enter. Wait for the "SUCCESS" message.
+4. **CRITICAL STEP: Completely restart Claude Desktop.**
+   - Do not just close the window.
+   - Go to your Windows system tray (the area next to the clock in the bottom right corner).
+   - Find the **Claude** icon.
+   - Right-click the icon and select **Quit** (Выйти).
+5. Open the Claude app again. The files will now be visible and accessible.
 
-## 🔒 Safety
-This script only modifies file metadata (dates) and access permissions. It **does not** alter or delete the actual contents of your files.
+## 🛠️ How It Works
+
+The script executes a 4-step deep initialization:
+- **Ownership Reset:** Claims administrative ownership (`takeown`).
+- **ACL Normalization:** Grants `Everyone` full access (`icacls`) to bypass restrictive permissions that block Claude's processes.
+- **MFT Flush:** Forces a native MFT re-index via a recursive directory rename loop.
+- **Metadata Touch:** Executes a non-destructive `copy /b` to update file timestamps and break OS-level process locks.
